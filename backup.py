@@ -6,12 +6,14 @@ import shutil
 BACKUP_ROOT = os.path.join(os.path.expanduser('~'), 'Yandex.Disk')
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+ITEMS_PATH = os.path.join(BASE_PATH, 'items.txt')
+EXCLUDES_LIST = os.path.join(BASE_PATH, 'exclude.txt')
 
-LOGS_PATH = os.path.join(BASE_PATH, 'logs')
-
+# Logs setup
+LOGS_PATH = os.path.join(BASE_PATH, 'logs', 'backups.log')
 logger = logging.getLogger('backups')
 logger.setLevel(logging.DEBUG)
-fh = logging.handlers.RotatingFileHandler(os.path.join(LOGS_PATH, 'backups.log'), maxBytes=5 * 1024 ** 2, backupCount=5)
+fh = logging.handlers.RotatingFileHandler(LOGS_PATH, maxBytes=5 * 1024 ** 2, backupCount=5)
 fh.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
@@ -24,24 +26,23 @@ def get_excludes(path: str = os.path.join(BASE_PATH, 'exclude.txt')):
 
 
 if __name__ == "__main__":
-    logger.info('Backup process started')
-    exclude_list = get_excludes(os.path.join(BASE_PATH, 'exclude.txt'))
     stats = {
         'copied': 0,
         'errors': 0,
         'exists': 0,
         'total': 0
     }
-    with open('items.txt', 'r') as items:
+    logger.info('Backup process started')
+    exclude_list = get_excludes(EXCLUDES_LIST)
+
+    with open(ITEMS_PATH, 'r') as items:
         for item in items:
             if item.startswith('#'):
                 continue
 
             for root, dirs, files in os.walk(item.strip(), followlinks=True):
                 for file in files:
-
                     src = os.path.join(root, file)
-
                     # skip excluded folders
                     if any([excl in src for excl in exclude_list]):
                         continue
